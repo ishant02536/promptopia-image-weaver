@@ -29,9 +29,12 @@ const Index = () => {
     
     setPrompt(inputPrompt);
     setIsGenerating(true);
+    setGeneratedImage(null);
     
     try {
       imageService.setApiKey(apiKey);
+      
+      console.log("Starting image generation with prompt:", inputPrompt);
       
       const image = await imageService.generateImage({
         positivePrompt: inputPrompt,
@@ -40,9 +43,13 @@ const Index = () => {
         numberResults: settings.numResults,
       });
       
+      console.log("Generation result:", image);
+      
       if (image) {
         setGeneratedImage(image);
         toast.success("Image generated successfully!");
+      } else {
+        toast.error("Failed to generate image. Please check your API key and try again.");
       }
     } catch (error) {
       console.error("Generation error:", error);

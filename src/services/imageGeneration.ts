@@ -50,13 +50,13 @@ export class ImageGenerationService {
     }
     
     try {
-      // Create an array of request objects
+      // Create the auth task
       const authTask = {
         taskType: "authentication",
         apiKey: this.apiKey
       };
       
-      // Define the image task with the possibility of including seed
+      // Define the image task with TypeScript type that includes optional seed
       const imageTask: {
         taskType: string;
         taskUUID: string;
@@ -103,37 +103,42 @@ export class ImageGenerationService {
       
       if (!response.ok) {
         const errorData = await response.json();
+        console.error("API request failed:", errorData);
         throw new Error(errorData.message || 'Failed to generate image');
       }
       
       const data = await response.json();
       console.log("Received response from Runware API:", data);
       
-      if (data.errors) {
-        throw new Error(data.errors[0]?.message || 'An error occurred during image generation');
+      if (!data || !data.data || !Array.isArray(data.data)) {
+        console.error("Invalid API response format:", data);
+        throw new Error('Invalid response format from API');
       }
       
-      // The API returns data in a different format than expected
-      // The response has a "data" array with objects for each task
-      if (!data.data || !Array.isArray(data.data) || data.data.length === 0) {
-        throw new Error('No image data received');
+      // Find the imageInference result in the data array
+      const imageResult = data.data.find((item: any) => 
+        item.taskType === 'imageInference' && item.imageURL
+      );
+      
+      if (!imageResult) {
+        console.error("No image result found in response:", data);
+        
+        // Check if there's an error message in the response
+        const errorMessage = data.errors?.[0]?.message || 
+                            data.data.find((item: any) => item.error)?.errorMessage || 
+                            'No image generated. Please try again.';
+        
+        throw new Error(errorMessage);
       }
       
-      // Find the imageInference task in the response data
-      const imageData = data.data.find((item: any) => item.taskType === 'imageInference');
-      
-      if (!imageData || !imageData.imageURL) {
-        console.error("Image data not found in response:", data);
-        throw new Error('No image URL found in response');
-      }
-      
+      // Extract the image data from the response
       return {
-        imageURL: imageData.imageURL,
+        imageURL: imageResult.imageURL,
         positivePrompt: params.positivePrompt,
-        seed: imageData.seed || 0,
-        imageUUID: imageData.imageUUID || '',
+        seed: imageResult.seed || 0,
+        imageUUID: imageResult.imageUUID || '',
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating image:', error);
       toast.error(error.message || 'Failed to generate image. Please try again.');
       return null;
