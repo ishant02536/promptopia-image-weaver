@@ -50,29 +50,32 @@ export class ImageGenerationService {
     }
     
     try {
-      const requestBody = [
-        {
-          taskType: "authentication",
-          apiKey: this.apiKey
-        },
-        {
-          taskType: "imageInference",
-          taskUUID: crypto.randomUUID(),
-          positivePrompt: params.positivePrompt,
-          model: params.model || "runware:100@1",
-          width: params.width || 1024,
-          height: params.height || 1024,
-          numberResults: params.numberResults || 1,
-          outputFormat: params.outputFormat || "WEBP",
-          CFGScale: params.CFGScale || 1,
-          scheduler: params.scheduler || "FlowMatchEulerDiscreteScheduler",
-          strength: params.strength || 0.8,
-        }
-      ];
+      // Create an array of request objects
+      const authTask = {
+        taskType: "authentication",
+        apiKey: this.apiKey
+      };
       
-      if (params.seed) {
-        requestBody[1].seed = params.seed;
+      const imageTask = {
+        taskType: "imageInference",
+        taskUUID: crypto.randomUUID(),
+        positivePrompt: params.positivePrompt,
+        model: params.model || "runware:100@1",
+        width: params.width || 1024,
+        height: params.height || 1024,
+        numberResults: params.numberResults || 1,
+        outputFormat: params.outputFormat || "WEBP",
+        CFGScale: params.CFGScale || 1,
+        scheduler: params.scheduler || "FlowMatchEulerDiscreteScheduler",
+        strength: params.strength || 0.8,
+      };
+      
+      // Add seed only if it's provided
+      if (params.seed !== undefined && params.seed !== null) {
+        imageTask.seed = params.seed;
       }
+      
+      const requestBody = [authTask, imageTask];
       
       const response = await fetch(API_ENDPOINT, {
         method: 'POST',
