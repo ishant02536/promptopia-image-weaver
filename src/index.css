@@ -137,10 +137,10 @@
   }
 
   .animate-in {
-    @apply animate-fade-in animate-once;
+    @apply animate-fade-in;
   }
 
   .animate-out {
-    @apply animate-fade-out animate-once;
+    @apply animate-fade-out;
   }
 }
