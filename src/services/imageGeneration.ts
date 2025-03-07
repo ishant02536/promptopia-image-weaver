@@ -91,6 +91,8 @@ export class ImageGenerationService {
       
       const requestBody = [authTask, imageTask];
       
+      console.log("Sending request to Runware API:", JSON.stringify(requestBody));
+      
       const response = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: {
@@ -105,18 +107,23 @@ export class ImageGenerationService {
       }
       
       const data = await response.json();
+      console.log("Received response from Runware API:", data);
       
       if (data.errors) {
         throw new Error(data.errors[0]?.message || 'An error occurred during image generation');
       }
       
-      if (!data.data || data.data.length < 2) {
+      // The API returns data in a different format than expected
+      // The response has a "data" array with objects for each task
+      if (!data.data || !Array.isArray(data.data) || data.data.length === 0) {
         throw new Error('No image data received');
       }
       
-      const imageData = data.data.find(item => item.taskType === 'imageInference');
+      // Find the imageInference task in the response data
+      const imageData = data.data.find((item: any) => item.taskType === 'imageInference');
       
       if (!imageData || !imageData.imageURL) {
+        console.error("Image data not found in response:", data);
         throw new Error('No image URL found in response');
       }
       
