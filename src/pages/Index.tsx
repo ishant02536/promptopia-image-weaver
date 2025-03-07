@@ -154,7 +154,7 @@ const Index = () => {
 
       <footer className="mt-auto pt-8 pb-4">
         <div className="container text-center text-sm text-muted-foreground">
-          <p>Create stunning AI-generated images with our modern, intuitive interface</p>
+          <p>@ Developed By Ishant</p>
         </div>
       </footer>
     </div>
