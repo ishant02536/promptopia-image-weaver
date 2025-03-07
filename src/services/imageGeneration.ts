@@ -6,6 +6,7 @@ const API_ENDPOINT = "https://api.runware.ai/v1";
 
 export interface GenerateImageParams {
   positivePrompt: string;
+  negativePrompt?: string;
   model?: string;
   width?: number;
   height?: number;
@@ -15,22 +16,26 @@ export interface GenerateImageParams {
   scheduler?: string;
   strength?: number;
   seed?: number | null;
+  steps?: number;
 }
 
 export interface GeneratedImage {
   imageURL: string;
   positivePrompt: string;
+  negativePrompt?: string;
   seed: number;
   imageUUID: string;
+  model?: string;
 }
 
-export class ImageGenerationService {
+class ImageGenerationService {
   private apiKey: string | null = null;
+  private abortController: AbortController | null = null;
   
   constructor(apiKey?: string) {
     this.apiKey = apiKey || null;
     
-    // If apiKey is not provided, prompt the user to input it through localStorage
+    // If apiKey is not provided, check localStorage
     if (!apiKey && typeof window !== 'undefined') {
       this.apiKey = localStorage.getItem('runware_api_key');
     }
@@ -42,25 +47,43 @@ export class ImageGenerationService {
       localStorage.setItem('runware_api_key', apiKey);
     }
   }
+
+  getApiKey(): string | null {
+    return this.apiKey;
+  }
+  
+  cancelRequest() {
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
+  }
   
   async generateImage(params: GenerateImageParams): Promise<GeneratedImage | null> {
     if (!this.apiKey) {
-      toast.error("API key not found. Please set your API key in settings.");
+      toast.error("API key not found. Please set your API key.");
       return null;
     }
     
     try {
+      // Cancel any existing request
+      this.cancelRequest();
+      
+      // Create new abort controller for this request
+      this.abortController = new AbortController();
+      
       // Create the auth task
       const authTask = {
         taskType: "authentication",
         apiKey: this.apiKey
       };
       
-      // Define the image task with TypeScript type that includes optional seed
+      // Define the image task
       const imageTask: {
         taskType: string;
         taskUUID: string;
         positivePrompt: string;
+        negativePrompt?: string;
         model: string;
         width: number;
         height: number;
@@ -69,6 +92,7 @@ export class ImageGenerationService {
         CFGScale: number;
         scheduler: string;
         strength: number;
+        steps?: number;
         seed?: number;
       } = {
         taskType: "imageInference",
@@ -79,10 +103,21 @@ export class ImageGenerationService {
         height: params.height || 1024,
         numberResults: params.numberResults || 1,
         outputFormat: params.outputFormat || "WEBP",
-        CFGScale: params.CFGScale || 1,
+        CFGScale: params.CFGScale || 7, // Increased from 1 to 7 for better accuracy
         scheduler: params.scheduler || "FlowMatchEulerDiscreteScheduler",
         strength: params.strength || 0.8,
       };
+      
+      // Add optional parameters
+      if (params.negativePrompt) {
+        imageTask.negativePrompt = params.negativePrompt;
+      }
+      
+      if (params.steps) {
+        imageTask.steps = params.steps;
+      } else {
+        imageTask.steps = 30; // Increase default steps for better quality
+      }
       
       // Add seed only if it's provided
       if (params.seed !== undefined && params.seed !== null) {
@@ -99,6 +134,7 @@ export class ImageGenerationService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
+        signal: this.abortController.signal
       });
       
       if (!response.ok) {
@@ -135,13 +171,22 @@ export class ImageGenerationService {
       return {
         imageURL: imageResult.imageURL,
         positivePrompt: params.positivePrompt,
+        negativePrompt: params.negativePrompt,
         seed: imageResult.seed || 0,
         imageUUID: imageResult.imageUUID || '',
+        model: params.model || "runware:100@1"
       };
     } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('Generation request was cancelled');
+        return null;
+      }
+      
       console.error('Error generating image:', error);
       toast.error(error.message || 'Failed to generate image. Please try again.');
       return null;
+    } finally {
+      this.abortController = null;
     }
   }
 }
