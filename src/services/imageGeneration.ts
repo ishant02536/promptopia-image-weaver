@@ -56,7 +56,21 @@ export class ImageGenerationService {
         apiKey: this.apiKey
       };
       
-      const imageTask = {
+      // Define the image task with the possibility of including seed
+      const imageTask: {
+        taskType: string;
+        taskUUID: string;
+        positivePrompt: string;
+        model: string;
+        width: number;
+        height: number;
+        numberResults: number;
+        outputFormat: string;
+        CFGScale: number;
+        scheduler: string;
+        strength: number;
+        seed?: number;
+      } = {
         taskType: "imageInference",
         taskUUID: crypto.randomUUID(),
         positivePrompt: params.positivePrompt,
