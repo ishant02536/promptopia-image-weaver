@@ -28,14 +28,26 @@ const Index = () => {
   const [apiKey, setApiKey] = useState<string>(localStorage.getItem('runware_api_key') || '');
   const [showApiInput, setShowApiInput] = useState<boolean>(!localStorage.getItem('runware_api_key'));
   
-  // Load image history from localStorage
+  // Clear image history on page refresh and then load any saved history
   useEffect(() => {
-    const savedHistory = localStorage.getItem('image_history');
-    if (savedHistory) {
-      try {
-        setImageHistory(JSON.parse(savedHistory));
-      } catch (e) {
-        console.error("Failed to parse image history from localStorage", e);
+    // Set a session storage flag to detect page refresh
+    const isNewSession = !sessionStorage.getItem('app_session');
+    
+    if (isNewSession) {
+      // This is a fresh page load/refresh - clear history
+      localStorage.removeItem('image_history');
+      setImageHistory([]);
+      sessionStorage.setItem('app_session', 'active');
+      console.log('Page refreshed - history cleared');
+    } else {
+      // This is not a fresh load, so load history as normal
+      const savedHistory = localStorage.getItem('image_history');
+      if (savedHistory) {
+        try {
+          setImageHistory(JSON.parse(savedHistory));
+        } catch (e) {
+          console.error("Failed to parse image history from localStorage", e);
+        }
       }
     }
   }, []);
