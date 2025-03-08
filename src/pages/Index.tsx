@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import PromptInput from '@/components/PromptInput';
 import ImageDisplay from '@/components/ImageDisplay';
 import LoadingAnimation from '@/components/LoadingAnimation';
@@ -134,7 +136,7 @@ const Index = () => {
             Transform Your Words Into Art
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Craft stunning visuals from your imagination with our AI image generator
+            Craft stunning AI-generated images with our modern, intuitive interface
           </p>
         </div>
       </header>
@@ -152,7 +154,10 @@ const Index = () => {
                 variant="outline"
                 size="sm"
                 className="rounded-xl bg-background/50 border-border/50 hover:bg-background/80"
-                onClick={() => document.getElementById('image-history-modal')?.showModal()}
+                onClick={() => {
+                  const modal = document.getElementById('image-history-modal') as HTMLDialogElement;
+                  if (modal) modal.showModal();
+                }}
               >
                 History ({imageHistory.length})
               </Button>
@@ -165,7 +170,10 @@ const Index = () => {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 rounded-full"
-                      onClick={() => document.getElementById('image-history-modal')?.close()}
+                      onClick={() => {
+                        const modal = document.getElementById('image-history-modal') as HTMLDialogElement;
+                        if (modal) modal.close();
+                      }}
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -196,7 +204,8 @@ const Index = () => {
                                     negativePrompt: img.negativePrompt
                                   });
                                 }
-                                document.getElementById('image-history-modal')?.close();
+                                const modal = document.getElementById('image-history-modal') as HTMLDialogElement;
+                                if (modal) modal.close();
                               }}
                             >
                               Use Prompt
@@ -216,7 +225,8 @@ const Index = () => {
                                 });
                                 setTimeout(() => {
                                   handleGenerate(img.positivePrompt);
-                                  document.getElementById('image-history-modal')?.close();
+                                  const modal = document.getElementById('image-history-modal') as HTMLDialogElement;
+                                  if (modal) modal.close();
                                 }, 100);
                               }}
                             >
@@ -258,12 +268,12 @@ const Index = () => {
                   placeholder="sk-xxxxxxxxxxxxxxxx"
                   className="flex-1 px-4 py-2 rounded-xl border border-border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
-                <button
+                <Button
                   type="submit"
                   className="px-4 py-2 rounded-xl bg-primary text-white font-medium hover:bg-primary/90 transition-colors"
                 >
                   Save Key
-                </button>
+                </Button>
               </div>
             </form>
           </div>
