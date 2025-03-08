@@ -133,7 +133,7 @@ const Index = () => {
             Text to Image
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3">
-            Transform Your Words Into Art
+            Tiwari Ji AI
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Craft stunning AI-generated images with our modern, intuitive interface
