@@ -78,7 +78,10 @@ class ImageGenerationService {
         apiKey: this.apiKey
       };
       
-      // Define the image task
+      // Enhanced prompt with better descriptor for accuracy
+      const enhancedPrompt = this.enhancePrompt(params.positivePrompt);
+      
+      // Define the image task with optimized parameters for better accuracy
       const imageTask: {
         taskType: string;
         taskUUID: string;
@@ -97,26 +100,29 @@ class ImageGenerationService {
       } = {
         taskType: "imageInference",
         taskUUID: crypto.randomUUID(),
-        positivePrompt: params.positivePrompt,
+        positivePrompt: enhancedPrompt,
         model: params.model || "runware:100@1",
         width: params.width || 1024,
         height: params.height || 1024,
         numberResults: params.numberResults || 1,
         outputFormat: params.outputFormat || "WEBP",
-        CFGScale: params.CFGScale || 7, // Increased from 1 to 7 for better accuracy
+        CFGScale: params.CFGScale || 9, // Increased from 7 to 9 for better accuracy
         scheduler: params.scheduler || "FlowMatchEulerDiscreteScheduler",
-        strength: params.strength || 0.8,
+        strength: params.strength || 0.9, // Increased from 0.8 to 0.9 for better accuracy
       };
       
-      // Add optional parameters
+      // Add enhanced negative prompt if not provided
       if (params.negativePrompt) {
         imageTask.negativePrompt = params.negativePrompt;
+      } else {
+        // Default negative prompt for better quality
+        imageTask.negativePrompt = "blurry, distorted, low quality, pixelated, disfigured, deformed, unfocused";
       }
       
       if (params.steps) {
         imageTask.steps = params.steps;
       } else {
-        imageTask.steps = 30; // Increase default steps for better quality
+        imageTask.steps = 35; // Increased from 30 to 35 for better quality
       }
       
       // Add seed only if it's provided
@@ -171,7 +177,7 @@ class ImageGenerationService {
       return {
         imageURL: imageResult.imageURL,
         positivePrompt: params.positivePrompt,
-        negativePrompt: params.negativePrompt,
+        negativePrompt: params.negativePrompt || imageTask.negativePrompt,
         seed: imageResult.seed || 0,
         imageUUID: imageResult.imageUUID || '',
         model: params.model || "runware:100@1"
@@ -188,6 +194,20 @@ class ImageGenerationService {
     } finally {
       this.abortController = null;
     }
+  }
+
+  // Helper method to enhance prompts for better accuracy
+  private enhancePrompt(originalPrompt: string): string {
+    // Don't modify if prompt already seems detailed
+    if (originalPrompt.length > 80) return originalPrompt;
+    
+    // Add quality enhancers for simple prompts
+    if (!originalPrompt.toLowerCase().includes('detailed') && 
+        !originalPrompt.toLowerCase().includes('high quality')) {
+      return `${originalPrompt}, high quality, detailed, realistic, 8k`;
+    }
+    
+    return originalPrompt;
   }
 }
 
